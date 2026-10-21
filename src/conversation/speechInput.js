@@ -49,12 +49,33 @@ function startRecognition({ lang, onInterim, onFinal, onError, onEnd }) {
   const rec = new Recognition();
   rec.lang = lang;
   rec.interimResults = true;
-  rec.continuous = false;
+  rec.continuous = true;
   rec.maxAlternatives = 1;
 
   let finalText = '';
   let interimText = '';
   let cancelled = false;
+  let finalized = false;
+  let silenceTimer = null;
+  const SILENCE_WAIT_MS = 1800; // 1.8s of silence before auto-sending
+
+  const finish = () => {
+    if (finalized || cancelled) return;
+    finalized = true;
+    clearTimeout(silenceTimer);
+    try {
+      rec.stop();
+    } catch {}
+    const text = (finalText || interimText).trim();
+    if (text) onFinal?.({ text });
+    else onError?.(new VoiceInputError('no-speech', RECOGNITION_ERRORS['no-speech']));
+    onEnd?.();
+  };
+
+  const resetSilenceTimer = () => {
+    clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(finish, SILENCE_WAIT_MS);
+  };
 
   rec.onresult = (event) => {
     interimText = '';
@@ -63,29 +84,50 @@ function startRecognition({ lang, onInterim, onFinal, onError, onEnd }) {
       if (r.isFinal) finalText += r[0].transcript;
       else interimText += r[0].transcript;
     }
-    onInterim?.((finalText + interimText).trim());
+    const current = (finalText + interimText).trim();
+    onInterim?.(current);
+    if (current) {
+      resetSilenceTimer();
+    }
   };
+
   rec.onerror = (event) => {
     if (cancelled || event.error === 'aborted') return;
+    if (event.error === 'no-speech' && !finalText && !interimText) {
+      return;
+    }
     cancelled = true;
+    clearTimeout(silenceTimer);
     onError?.(new VoiceInputError(event.error, RECOGNITION_ERRORS[event.error] || 'Voice input stopped unexpectedly. Please try again.'));
   };
+
   rec.onend = () => {
-    if (!cancelled) {
-      // Some mobile browsers end without marking the last chunk final.
-      const text = (finalText || interimText).trim();
-      if (text) onFinal?.({ text });
-      else onError?.(new VoiceInputError('no-speech', RECOGNITION_ERRORS['no-speech']));
+    if (cancelled || finalized) return;
+    const text = (finalText || interimText).trim();
+    if (text) {
+      finish();
+    } else {
+      try {
+        rec.start();
+      } catch {
+        finish();
+      }
     }
-    onEnd?.();
   };
+
   rec.start();
 
   return {
-    stop: () => rec.stop(),
+    stop: () => {
+      clearTimeout(silenceTimer);
+      finish();
+    },
     cancel: () => {
       cancelled = true;
-      rec.abort();
+      clearTimeout(silenceTimer);
+      try {
+        rec.abort();
+      } catch {}
     },
   };
 }

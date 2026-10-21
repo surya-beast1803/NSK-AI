@@ -23,14 +23,8 @@ function ensureContext() {
 
 export function unlockAudio() {
   const c = ensureContext();
-  if (c && c.state === 'suspended') c.resume().catch(() => {});
-  if (c) {
-    // A silent buffer fully unlocks iOS Safari.
-    const b = c.createBuffer(1, 1, 22050);
-    const s = c.createBufferSource();
-    s.buffer = b;
-    s.connect(c.destination);
-    s.start(0);
+  if (c && c.state === 'suspended') {
+    c.resume().catch(() => {});
   }
 }
 
@@ -72,14 +66,17 @@ export function createStreamPlayer() {
   const activeSources = [];
   let isEnded = false;
   let hasStarted = false;
+  let isStopped = false;
   let onFinishResolve = null;
   const finishPromise = new Promise((resolve) => {
     onFinishResolve = resolve;
   });
   let endTimeout = null;
+  let decodeQueue = Promise.resolve();
 
   function cleanup() {
     clearTimeout(endTimeout);
+    isStopped = true;
     activeSources.forEach((s) => {
       try {
         s.onended = null;
@@ -94,16 +91,25 @@ export function createStreamPlayer() {
     onFinishResolve?.();
   }
 
-  async function pushChunk(base64Wav) {
-    if (!base64Wav) return;
+  async function processChunk(base64Wav) {
+    if (!base64Wav || isStopped) return;
     if (c.state === 'suspended') await c.resume().catch(() => {});
-    const arrayBuffer = base64ToArrayBuffer(base64Wav);
-    const audioBuffer = await c.decodeAudioData(arrayBuffer);
+
+    let audioBuffer;
+    try {
+      const arrayBuffer = base64ToArrayBuffer(base64Wav);
+      audioBuffer = await c.decodeAudioData(arrayBuffer);
+    } catch (err) {
+      console.warn('[audioEngine] chunk decode failed:', err);
+      return;
+    }
+    if (isStopped) return;
 
     if (!hasStarted) {
       hasStarted = true;
       setAudioSampler(sampleLevels);
-      nextStartTime = c.currentTime + 0.05;
+      // 180ms jitter buffer ensures chunks buffer smoothly without gaps
+      nextStartTime = c.currentTime + 0.18;
     }
 
     const source = c.createBufferSource();
@@ -124,14 +130,22 @@ export function createStreamPlayer() {
     };
   }
 
+  function pushChunk(base64Wav) {
+    // Chain sequentially into a FIFO queue so chunks ALWAYS decode and play in exact order
+    decodeQueue = decodeQueue.then(() => processChunk(base64Wav)).catch(() => {});
+    return decodeQueue;
+  }
+
   function end() {
     isEnded = true;
-    if (!hasStarted || activeSources.length === 0) {
-      cleanup();
-    } else {
-      const waitMs = Math.max(0, (nextStartTime - c.currentTime) * 1000) + 1000;
-      endTimeout = setTimeout(cleanup, waitMs);
-    }
+    decodeQueue.then(() => {
+      if (!hasStarted || activeSources.length === 0) {
+        cleanup();
+      } else {
+        const waitMs = Math.max(0, (nextStartTime - c.currentTime) * 1000) + 800;
+        endTimeout = setTimeout(cleanup, waitMs);
+      }
+    });
   }
 
   const player = {
