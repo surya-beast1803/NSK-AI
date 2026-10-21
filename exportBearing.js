@@ -71,7 +71,7 @@ async function run() {
 
   // Bezel
   const bezel = new THREE.Mesh(
-    new THREE.TorusGeometry(DIMENSIONS.innerBoreR - 0.005, 0.018, 8, 96),
+    new THREE.TorusGeometry(DIMENSIONS.innerBoreR - 0.005, 0.010, 8, 96),
     mats.bezel
   );
   bezel.name = 'Face_Bezel';

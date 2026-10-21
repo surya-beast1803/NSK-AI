@@ -1,18 +1,16 @@
-// Procedural deep-groove ball bearing parts. All parts share the Z axis
-// (pointing at the camera) so the bearing faces the viewer.
 import * as THREE from 'three';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { mergeGeometries, toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 export const DIMENSIONS = {
-  outerR: 1.6,
+  outerR: 1.66,      // refined casing: +0.06 over original (clean, balanced outer wall)
   outerBoreR: 1.39,
   innerR: 1.01,
-  innerBoreR: 0.84,
-  width: 0.46,
+  innerBoreR: 0.81,  // refined casing: leaves ample space for centre display
+  width: 0.48,       // subtle depth increase
   pitchR: 1.2,
   ballR: 0.185,
-  ballCount: 10,
-  chamfer: 0.03,
+  ballCount: 14,
+  chamfer: 0.032,
 };
 
 // Profile point helpers: x = radius, y = axial position (becomes z).
@@ -28,8 +26,8 @@ function arc(cx, cy, r, from, to, steps) {
 function lathe(points, segments) {
   const g = new THREE.LatheGeometry(points, segments);
   g.rotateX(Math.PI / 2); // lathe axis Y -> Z
-  // Flat-ish shading across the profile corners, then weld the normals at
-  // the lathe seam so no vertical line shows where the ring closes.
+  // Smooth continuous shading across the profile and weld the normals at
+  // the lathe seam so the studio light reflections wrap beautifully without seam line.
   g.computeVertexNormals();
   const n = g.attributes.normal;
   const P = points.length;
@@ -107,7 +105,7 @@ export function createInnerRingGeometry(segments = 96) {
       rOut: d.innerR,
       grooveOnInside: false,
       width: d.width,
-      chamfer: d.chamfer,
+      chamfer: 0.02, // balanced chamfer for specular reflection without excess curvature
       ballR: d.ballR,
       pitchR: d.pitchR,
     }),
@@ -123,23 +121,23 @@ export function createCageGeometry() {
   const collarR = d.ballR * 0.9;
   const step = (Math.PI * 2) / d.ballCount;
   const chord = 2 * d.pitchR * Math.sin(step / 2);
-  const bridgeLen = chord - collarR * 2 + 0.02;
+  const bridgeLen = chord - collarR * 2 + 0.028;
   for (let i = 0; i < d.ballCount; i++) {
     const a = i * step + Math.PI / 2;
-    const collar = new THREE.TorusGeometry(collarR, 0.026, 8, 32);
-    collar.scale(1, 1, 0.6);
+    const collar = new THREE.TorusGeometry(collarR, 0.028, 10, 36);
+    collar.scale(1, 1, 0.65);
     collar.translate(Math.cos(a) * d.pitchR, Math.sin(a) * d.pitchR, 0);
     parts.push(collar);
 
     const mid = a + step / 2;
-    const bridge = new THREE.BoxGeometry(bridgeLen, 0.075, 0.022);
+    const bridge = new THREE.BoxGeometry(bridgeLen, 0.145, 0.026);
     bridge.rotateZ(mid + Math.PI / 2);
-    bridge.translate(Math.cos(mid) * d.pitchR * Math.cos(step / 2), Math.sin(mid) * d.pitchR * Math.cos(step / 2), -0.01);
+    bridge.translate(Math.cos(mid) * d.pitchR * Math.cos(step / 2), Math.sin(mid) * d.pitchR * Math.cos(step / 2), -0.008);
     parts.push(bridge);
 
-    const rivet = new THREE.SphereGeometry(0.03, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+    const rivet = new THREE.SphereGeometry(0.032, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2);
     rivet.rotateX(Math.PI / 2);
-    rivet.translate(Math.cos(mid) * d.pitchR * Math.cos(step / 2), Math.sin(mid) * d.pitchR * Math.cos(step / 2), 0.002);
+    rivet.translate(Math.cos(mid) * d.pitchR * Math.cos(step / 2), Math.sin(mid) * d.pitchR * Math.cos(step / 2), 0.006);
     parts.push(rivet);
   }
   const merged = mergeGeometries(parts.map((g) => g.toNonIndexed()));

@@ -21,15 +21,15 @@ export default function ProceduralBearing({ spin, onCentreTap, highQuality, chil
   const cageRef = useRef();
   const ballRefs = useRef([]);
 
-  const segments = highQuality ? 128 : 72;
+  const segments = highQuality ? 144 : 96;
   const geo = useMemo(
     () => ({
       outer: createOuterRingGeometry(segments),
       inner: createInnerRingGeometry(segments),
       cage: createCageGeometry(),
-      ball: new THREE.SphereGeometry(DIMENSIONS.ballR, highQuality ? 40 : 24, highQuality ? 28 : 16),
+      ball: new THREE.SphereGeometry(DIMENSIONS.ballR, highQuality ? 40 : 28, highQuality ? 28 : 20),
       face: new THREE.CircleGeometry(DIMENSIONS.innerBoreR, 64),
-      bezel: new THREE.TorusGeometry(DIMENSIONS.innerBoreR - 0.005, 0.018, 8, 96),
+      bezel: new THREE.TorusGeometry(DIMENSIONS.innerBoreR - 0.005, 0.010, 8, 96),
     }),
     [segments, highQuality],
   );

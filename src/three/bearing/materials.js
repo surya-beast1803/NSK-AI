@@ -9,9 +9,12 @@ export function createBearingMaterials({ highQuality }) {
     envMapIntensity: 1.25,
   });
 
-  const innerSteel = ringSteel.clone();
-  innerSteel.roughness = 0.2;
-  innerSteel.color.set('#c3c9d2');
+  const innerSteel = new THREE.MeshPhysicalMaterial({
+    color: '#e8edf5',
+    metalness: 1,
+    roughness: highQuality ? 0.16 : 0.20,
+    envMapIntensity: 1.75,
+  });
 
   const ballChrome = new THREE.MeshPhysicalMaterial({
     color: '#eef1f5',
@@ -37,9 +40,10 @@ export function createBearingMaterials({ highQuality }) {
   });
 
   const bezel = new THREE.MeshPhysicalMaterial({
-    color: '#3a4250',
+    color: '#94a3b8',
     metalness: 1,
-    roughness: 0.3,
+    roughness: 0.22,
+    envMapIntensity: 1.4,
   });
 
   return { ringSteel, innerSteel, ballChrome, cageSteel, faceGlass, bezel };
