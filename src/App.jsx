@@ -7,6 +7,7 @@ import Splash from './components/Splash.jsx';
 import StatusBadge from './components/StatusBadge.jsx';
 import ConversationPanel from './components/ConversationPanel.jsx';
 import StaticFace from './components/StaticFace.jsx';
+import TermsOverlay from './components/TermsOverlay.jsx';
 
 const Scene = lazy(() => import('./three/Scene.jsx'));
 
@@ -47,6 +48,14 @@ export default function App() {
   const [sceneReady, setSceneReady] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(() => {
+    try {
+      return sessionStorage.getItem('nsk_terms_accepted') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   // Free screen area for the bearing, read by the 3D rig every frame.
   const insets = useRef({ top: 0, right: 0, bottom: 0, left: 0 });
@@ -85,6 +94,17 @@ export default function App() {
     noteActivity(); // the boredom clock starts once the user can see the bearing
   }, []);
   const onSplashLeave = useCallback(() => setRevealed(true), []);
+  const onAcceptTerms = useCallback(() => {
+    try {
+      sessionStorage.setItem('nsk_terms_accepted', 'true');
+    } catch {
+      // ignore
+    }
+    setTermsAccepted(true);
+    setShowTermsModal(false);
+    noteActivity();
+  }, []);
+
   useEffect(() => {
     if (!has3D) setSceneReady(true);
   }, [has3D]);
@@ -108,12 +128,32 @@ export default function App() {
           <img src={assets.logo} alt="NSK" width="72" height="24" />
           <span className="brand__name">{assistant.name.replace(/^NSK\s*/, '')}</span>
         </div>
-        {!desktop && <StatusBadge status={convo.status} onStop={convo.interrupt} />}
+        <div className="topbar__actions">
+          <button
+            type="button"
+            className="legal-btn"
+            onClick={() => setShowTermsModal(true)}
+            title="Legal & Educational Disclaimer"
+          >
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span>Disclaimer</span>
+          </button>
+          {!desktop && <StatusBadge status={convo.status} onStop={convo.interrupt} />}
+        </div>
       </header>
 
       <ConversationPanel ref={panelRef} convo={convo} desktop={desktop} />
 
       {!splashDone && <Splash ready={sceneReady} onLeave={onSplashLeave} onDone={onSplashDone} />}
+
+      <TermsOverlay
+        isOpen={(!termsAccepted && splashDone) || showTermsModal}
+        isGatekeeper={!termsAccepted}
+        onAccept={onAcceptTerms}
+        onClose={() => setShowTermsModal(false)}
+      />
     </div>
   );
 }
