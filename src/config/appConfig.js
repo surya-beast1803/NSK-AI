@@ -64,5 +64,6 @@ export const bearingLayout = {
   eyeSize: 0.34,
   waveformY: -0.36, // the smile and the voice bars share this spot
   waveformWidth: 0.85,
+  mouthWidth: 1.0,
 };
 

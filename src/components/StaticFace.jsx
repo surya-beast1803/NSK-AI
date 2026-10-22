@@ -23,7 +23,9 @@ export default function StaticFace({ status, insets }) {
             ? voiceSignal.bands[i * 2]
             : status === 'listening'
               ? 0.15 + 0.15 * Math.sin(t / 200 + i)
-              : 0.06;
+              : status === 'processing'
+                ? 0.28 + 0.22 * Math.sin(t / 140 - i * 0.45)
+                : 0.06;
         el.style.transform = `scaleY(${Math.max(0.06, v)})`;
       });
       raf = requestAnimationFrame(tick);

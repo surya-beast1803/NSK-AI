@@ -53,45 +53,45 @@ const fragment = /* glsl */ `
     float loadAlpha = 0.0;
 
     if (uThinking > 0.001) {
-      // 3 glowing data nodes pulsing sequentially
+      // 3 bold, distinct glowing dots bouncing in a fluid wave
       float dotCores = 0.0;
       float dotGlows = 0.0;
 
       for (int i = 0; i < 3; i++) {
         float fi = float(i);
-        float px = (fi - 1.0) * 0.34;
-        float phase = uTime * 5.8 - fi * 1.28;
-        float pulse = 0.5 + 0.5 * sin(phase);
-        float py = sin(phase) * 0.038;
+        float px = (fi - 1.0) * 0.36;
+        float phase = uTime * 6.2 - fi * 1.5;
+        float bounce = sin(phase);
+        float py = bounce * 0.08;
 
         float dist = length(vec2(X - px, Y - py));
-        float rad = 0.032 + pulse * 0.024;
+        float rad = 0.065 + max(0.0, bounce) * 0.035;
         float dDot = dist - rad;
 
-        float dCore = 1.0 - smoothstep(0.0, 0.016, dDot);
-        float dGlow = exp(-max(dDot, 0.0) * 16.0) * (0.45 + 0.55 * pulse);
+        float dCore = 1.0 - smoothstep(-0.015, 0.02, dDot);
+        float dGlow = exp(-max(dDot, 0.0) * 11.0) * (0.65 + 0.35 * max(0.0, bounce));
 
         dotCores += dCore;
         dotGlows += dGlow;
       }
 
-      // Connecting energy thread between nodes
-      float beamDist = length(vec2(max(abs(X) - 0.38, 0.0), Y)) - 0.01;
-      float beamCore = (1.0 - smoothstep(0.0, 0.014, beamDist)) * 0.45;
-      float beamGlow = exp(-max(beamDist, 0.0) * 22.0) * 0.35;
+      // Connecting energy track between nodes
+      float beamDist = length(vec2(max(abs(X) - 0.44, 0.0), Y)) - 0.016;
+      float beamCore = (1.0 - smoothstep(0.0, 0.022, beamDist)) * 0.55;
+      float beamGlow = exp(-max(beamDist, 0.0) * 15.0) * 0.5;
 
-      // Scanning photon wave traveling back and forth
-      float scanX = sin(uTime * 4.0) * 0.4;
-      float scanDist = length(vec2(X - scanX, Y * 1.8));
-      float scanGlow = exp(-scanDist * 20.0) * 0.85;
+      // Sweeping pulse wave along the track
+      float scanX = sin(uTime * 4.5) * 0.44;
+      float scanDist = length(vec2(X - scanX, Y * 1.5));
+      float scanGlow = exp(-scanDist * 12.0) * 0.95;
 
-      float totalCore = clamp(dotCores + beamCore * 0.5, 0.0, 1.0);
+      float totalCore = clamp(dotCores + beamCore, 0.0, 1.0);
       float totalGlow = dotGlows + beamGlow + scanGlow;
 
-      vec3 cyanColor = mix(vec3(0.12, 0.65, 1.6), vec3(0.38, 1.05, 2.0), 0.5 + 0.5 * sin(uTime * 2.4));
-      vec3 coreWhite = vec3(0.96, 0.99, 1.0);
-      loadColor = mix(cyanColor * totalGlow, coreWhite * 1.35, totalCore) * uGlow;
-      loadAlpha = clamp(totalCore + totalGlow * 0.8, 0.0, 1.0) * (1.0 - uFade);
+      vec3 cyanColor = mix(vec3(0.12, 0.75, 1.9), vec3(0.35, 1.1, 2.3), 0.5 + 0.5 * sin(uTime * 3.0));
+      vec3 coreWhite = vec3(0.98, 1.0, 1.0);
+      loadColor = (cyanColor * totalGlow * 1.6 + coreWhite * totalCore * 1.8) * uGlow;
+      loadAlpha = clamp(totalCore * 1.3 + totalGlow * 0.9, 0.0, 1.0) * (1.0 - uFade);
     }
 
     vec3 finalCol = mix(smileColor, loadColor, uThinking);
