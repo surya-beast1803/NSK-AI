@@ -41,12 +41,12 @@ export function startVoiceCapture({ lang, onInterim, onFinal, onError, onEnd }) 
   }
 
   const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  let userStopped = false;
   let activeSession = null;
   let hasReceivedResults = false;
 
   const runRecorderFallback = (reason) => {
-    if (!support.recorder) {
-      onError?.(new VoiceInputError('unsupported', 'This browser does not support audio recording.'));
+    if (userStopped || !support.recorder) {
       return;
     }
     console.warn('[speechInput] Falling back to audio recorder:', reason);
@@ -76,8 +76,13 @@ export function startVoiceCapture({ lang, onInterim, onFinal, onError, onEnd }) 
           onFinal?.(res);
         },
         onError: (err) => {
-          // If recognition failed before getting any speech (e.g. mobile Android speech service, headset mic silent in Chrome):
-          if (!hasReceivedResults && support.recorder && (err.code === 'audio-capture' || err.code === 'network' || err.code === 'no-speech' || isMobile)) {
+          // If the user intentionally stopped or cancelled, do not fallback to recorder!
+          if (userStopped) {
+            onError?.(err);
+            return;
+          }
+          // If recognition failed before getting any speech on mobile or due to hardware capture issue:
+          if (!hasReceivedResults && support.recorder && (err.code === 'audio-capture' || err.code === 'network' || (err.code === 'no-speech' && isMobile))) {
             runRecorderFallback(err.message);
             return;
           }
@@ -87,15 +92,27 @@ export function startVoiceCapture({ lang, onInterim, onFinal, onError, onEnd }) 
       });
 
       return {
-        stop: () => activeSession?.stop(),
-        cancel: () => activeSession?.cancel(),
+        stop: () => {
+          userStopped = true;
+          activeSession?.stop();
+        },
+        cancel: () => {
+          userStopped = true;
+          activeSession?.cancel();
+        },
       };
     } catch (err) {
-      if (support.recorder) {
+      if (!userStopped && support.recorder) {
         runRecorderFallback(err.message);
         return {
-          stop: () => activeSession?.stop(),
-          cancel: () => activeSession?.cancel(),
+          stop: () => {
+            userStopped = true;
+            activeSession?.stop();
+          },
+          cancel: () => {
+            userStopped = true;
+            activeSession?.cancel();
+          },
         };
       }
       throw err;

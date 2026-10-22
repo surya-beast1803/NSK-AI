@@ -210,7 +210,12 @@ export function useConversation() {
         onError: (err) => {
           captureRef.current = null;
           setInterim('');
-          fail(err);
+          if (err.code === 'no-speech' || err.code === 'aborted') {
+            // Cleanly return to IDLE without error banner or infinite thinking loop
+            setStatus(STATUS.IDLE);
+          } else {
+            fail(err);
+          }
         },
       });
       setStatus(STATUS.LISTENING);
@@ -221,8 +226,11 @@ export function useConversation() {
 
   const stopListening = useCallback(() => {
     captureRef.current?.stop();
-    setStatus(STATUS.PROCESSING);
-  }, []);
+    // If no words were spoken, immediately return to IDLE instead of stuck in PROCESSING
+    if (!interim.trim()) {
+      setStatus(STATUS.IDLE);
+    }
+  }, [interim]);
 
   // One button: start, stop and send, or interrupt the AI while it talks.
   const toggleVoice = useCallback(() => {
