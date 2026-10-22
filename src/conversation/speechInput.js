@@ -133,8 +133,8 @@ function startRecognition({ lang, isMobile, onInterim, onFinal, onError, onEnd }
   // Pick device language or configured language
   rec.lang = lang || (typeof navigator !== 'undefined' ? navigator.language : 'en-US');
   rec.interimResults = true;
-  // CRITICAL MOBILE FIX: Mobile Chrome/Android strictly drops speech recognition if continuous is true!
-  rec.continuous = !isMobile;
+  // Continuous recognition allows natural pauses without mid-speech cutoff
+  rec.continuous = true;
   rec.maxAlternatives = 1;
 
   let finalText = '';
@@ -143,7 +143,7 @@ function startRecognition({ lang, isMobile, onInterim, onFinal, onError, onEnd }
   let finalized = false;
   let stopping = false;
   let silenceTimer = null;
-  const SILENCE_WAIT_MS = isMobile ? 1400 : 2200; // Comfortable silence buffer
+  const SILENCE_WAIT_MS = isMobile ? 2200 : 3500; // Generous pause buffer preventing mid-sentence cutoff
 
   const finish = () => {
     if (finalized || cancelled) return;
@@ -230,14 +230,10 @@ function startRecognition({ lang, isMobile, onInterim, onFinal, onError, onEnd }
       try {
         rec.stop();
       } catch {}
-      const text = (finalText || interimText).trim();
-      if (text) {
-        finish();
-      } else {
-        setTimeout(() => {
-          if (!finalized) finish();
-        }, 300);
-      }
+      // Wait for Chrome to deliver the refined final transcript on onresult or onend
+      setTimeout(() => {
+        if (!finalized && !cancelled) finish();
+      }, 600);
     },
     cancel: () => {
       cancelled = true;
