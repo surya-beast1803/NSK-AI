@@ -151,7 +151,7 @@ function startRecognition({ lang, isMobile, onInterim, onFinal, onError, onEnd }
     clearTimeout(silenceTimer);
     try {
       rec.stop();
-    } catch {}
+    } catch { }
     const text = (finalText || interimText).trim();
     if (text) onFinal?.({ text });
     else onError?.(new VoiceInputError('no-speech', RECOGNITION_ERRORS['no-speech']));
@@ -229,7 +229,7 @@ function startRecognition({ lang, isMobile, onInterim, onFinal, onError, onEnd }
       clearTimeout(silenceTimer);
       try {
         rec.stop();
-      } catch {}
+      } catch { }
       // Wait for Chrome to deliver the refined final transcript on onresult or onend
       setTimeout(() => {
         if (!finalized && !cancelled) finish();
@@ -240,7 +240,7 @@ function startRecognition({ lang, isMobile, onInterim, onFinal, onError, onEnd }
       clearTimeout(silenceTimer);
       try {
         rec.abort();
-      } catch {}
+      } catch { }
     },
   };
 }

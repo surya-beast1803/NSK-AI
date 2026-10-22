@@ -36,9 +36,9 @@ export const assets = {
 };
 
 export const assistant = {
-  name: 'NSK Bearing AI',
+  name: 'NSK Officers Enclave FY2026',
   greeting:
-    'Hello, I am the NSK Bearing Assistant. Tap the microphone or type a question about bearings, maintenance or plant safety.',
+    "Welcome to NSK Officers Enclave FY2026 – Change & Go Beyond. I am your AI Co-Host for today's session with Nathan-san. How can I assist you?",
   speechLang: 'en-IN',
   suggestions: [
     'What causes bearing noise?',
@@ -64,5 +64,5 @@ export const bearingLayout = {
   eyeSize: 0.34,
   waveformY: -0.36, // the smile and the voice bars share this spot
   waveformWidth: 0.85,
-  mouthWidth: 1.0,
 };
+

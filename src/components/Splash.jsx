@@ -35,7 +35,7 @@ export default function Splash({ ready, onLeave, onDone }) {
         <img className="splash__logo" src={assets.logo} alt="NSK" width="1024" height="341" />
         <div className="splash__sheen" />
       </div>
-      <p className="splash__tag">Bearing AI Assistant</p>
+      <p className="splash__tag">NSK Co-Host AI</p>
       <div className="splash__progress" aria-hidden="true">
         <span className={ready ? 'is-ready' : ''} />
       </div>

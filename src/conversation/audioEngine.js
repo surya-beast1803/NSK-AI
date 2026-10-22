@@ -24,7 +24,7 @@ function ensureContext() {
 export function unlockAudio() {
   const c = ensureContext();
   if (c && c.state === 'suspended') {
-    c.resume().catch(() => {});
+    c.resume().catch(() => { });
   }
 }
 
@@ -60,7 +60,7 @@ export function createStreamPlayer() {
   stopVoice();
   const c = ensureContext();
   if (!c) throw new Error('no_audio');
-  if (c.state === 'suspended') c.resume().catch(() => {});
+  if (c.state === 'suspended') c.resume().catch(() => { });
 
   let nextStartTime = 0;
   const activeSources = [];
@@ -81,7 +81,7 @@ export function createStreamPlayer() {
       try {
         s.onended = null;
         s.stop();
-      } catch {}
+      } catch { }
     });
     activeSources.length = 0;
     if (current?.streamPlayer === player) {
@@ -93,7 +93,7 @@ export function createStreamPlayer() {
 
   async function processChunk(base64Wav) {
     if (!base64Wav || isStopped) return;
-    if (c.state === 'suspended') await c.resume().catch(() => {});
+    if (c.state === 'suspended') await c.resume().catch(() => { });
 
     let audioBuffer;
     try {
@@ -132,7 +132,7 @@ export function createStreamPlayer() {
 
   function pushChunk(base64Wav) {
     // Chain sequentially into a FIFO queue so chunks ALWAYS decode and play in exact order
-    decodeQueue = decodeQueue.then(() => processChunk(base64Wav)).catch(() => {});
+    decodeQueue = decodeQueue.then(() => processChunk(base64Wav)).catch(() => { });
     return decodeQueue;
   }
 
@@ -163,7 +163,7 @@ export async function playVoice(base64Wav) {
   stopVoice();
   const c = ensureContext();
   if (!c) throw new Error('no_audio');
-  if (c.state === 'suspended') await c.resume().catch(() => {});
+  if (c.state === 'suspended') await c.resume().catch(() => { });
   if (c.state !== 'running') throw new Error('audio_locked'); // caller falls back to animated speech
   const buffer = await c.decodeAudioData(base64ToArrayBuffer(base64Wav));
   return new Promise((resolve) => {
