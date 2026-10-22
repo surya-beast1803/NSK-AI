@@ -99,6 +99,14 @@ export function useConversation() {
       let fullReplyText = '';
       let audioChunkCount = 0;
 
+      // Safety watchdog: reset to IDLE if processing exceeds 20 seconds
+      const watchdog = setTimeout(() => {
+        if (requestId === requestRef.current) {
+          console.warn('[conversation] Request timed out waiting for AI reply');
+          fail(new Error('The AI took too long to answer. Please try asking again.'), requestId);
+        }
+      }, 20000);
+
       try {
         streamPlayer = createStreamPlayer();
 
@@ -112,6 +120,7 @@ export function useConversation() {
           },
           onText: (replyText) => {
             if (requestId !== requestRef.current) return;
+            clearTimeout(watchdog);
             textReceived = true;
             fullReplyText = (replyText || '').trim();
             if (placeholderId) {
@@ -122,6 +131,7 @@ export function useConversation() {
           },
           onAudioChunk: (chunk) => {
             if (requestId !== requestRef.current) return;
+            clearTimeout(watchdog);
             audioChunkCount++;
             streamPlayer.pushChunk(chunk).catch((err) => {
               console.warn('[conversation] chunk decode error:', err);
@@ -129,7 +139,10 @@ export function useConversation() {
           },
         });
 
-        if (requestId !== requestRef.current) return;
+        if (requestId !== requestRef.current) {
+          clearTimeout(watchdog);
+          return;
+        }
 
         if (streamPlayer) {
           streamPlayer.end();
@@ -139,8 +152,10 @@ export function useConversation() {
             await speakSynthetic(fullReplyText);
           }
         }
+        clearTimeout(watchdog);
         if (requestId === requestRef.current) setStatus(STATUS.IDLE);
       } catch (streamErr) {
+        clearTimeout(watchdog);
         console.warn('[conversation] streaming failed, falling back to batch mode:', streamErr?.message || streamErr);
         if (streamPlayer) streamPlayer.stop();
 
@@ -204,8 +219,13 @@ export function useConversation() {
         onFinal: (result) => {
           captureRef.current = null;
           setInterim('');
-          if (result.text) sendText(result.text);
-          else if (result.audio) sendAudio(result.audio);
+          if (result.text && result.text.trim()) {
+            sendText(result.text.trim());
+          } else if (result.audio) {
+            sendAudio(result.audio);
+          } else {
+            setStatus(STATUS.IDLE);
+          }
         },
         onError: (err) => {
           captureRef.current = null;

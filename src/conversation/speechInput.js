@@ -141,6 +141,7 @@ function startRecognition({ lang, isMobile, onInterim, onFinal, onError, onEnd }
   let interimText = '';
   let cancelled = false;
   let finalized = false;
+  let stopping = false;
   let silenceTimer = null;
   const SILENCE_WAIT_MS = isMobile ? 1400 : 2200; // Comfortable silence buffer
 
@@ -184,12 +185,16 @@ function startRecognition({ lang, isMobile, onInterim, onFinal, onError, onEnd }
     if (current) {
       onInterim?.(current);
       resetSilenceTimer();
+      // If user had clicked stop, finish immediately now that final text has arrived
+      if (stopping && final) {
+        finish();
+      }
     }
   };
 
   rec.onerror = (event) => {
     if (cancelled || event.error === 'aborted') return;
-    if (event.error === 'no-speech' && !finalText && !interimText && !isMobile) {
+    if (event.error === 'no-speech' && !finalText && !interimText && !isMobile && !stopping) {
       return;
     }
     cancelled = true;
@@ -200,7 +205,7 @@ function startRecognition({ lang, isMobile, onInterim, onFinal, onError, onEnd }
   rec.onend = () => {
     if (cancelled || finalized) return;
     const text = (finalText || interimText).trim();
-    if (text || isMobile) {
+    if (text || stopping || isMobile) {
       finish();
     } else {
       try {
@@ -219,8 +224,20 @@ function startRecognition({ lang, isMobile, onInterim, onFinal, onError, onEnd }
 
   return {
     stop: () => {
+      if (finalized || cancelled) return;
+      stopping = true;
       clearTimeout(silenceTimer);
-      finish();
+      try {
+        rec.stop();
+      } catch {}
+      const text = (finalText || interimText).trim();
+      if (text) {
+        finish();
+      } else {
+        setTimeout(() => {
+          if (!finalized) finish();
+        }, 300);
+      }
     },
     cancel: () => {
       cancelled = true;
