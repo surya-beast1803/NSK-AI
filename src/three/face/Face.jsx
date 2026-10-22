@@ -16,7 +16,7 @@ export default function Face({ status, faceRadius, mood }) {
   const eyePlane = L.eyeSize * R * 2 * 1.6;
 
   useFrame((_, dt) => {
-    const target = status === 'listening' ? 1.25 : status === 'speaking' ? 1.05 + voiceSignal.level * 0.3 : 1;
+    const target = status === 'listening' ? 1.25 : 1;
     glow.current += (target - glow.current) * Math.min(1, dt * 6);
   });
 

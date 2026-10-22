@@ -33,7 +33,7 @@ const MOODS = {
   attentive: { happy: 0.45, scale: 1.08, smile: 0.7, open: 0, thinking: 0, lid: 0 },
   listening: { happy: 0.52, scale: 1.07, raise: 0.08, smile: 0.7, open: 0, thinking: 0, lid: 0 },
   thinking: { happy: 0.35, scale: 0.98, rot: -0.28, raise: 0.16, smile: 0, open: 0, bars: 0, thinking: 1, lid: 0.18 },
-  speaking: { happy: 0.95, scale: 1.04, smile: 0.8, open: 0, bars: 1, thinking: 0, lid: 0 },
+  speaking: { happy: 0.5, scale: 1, smile: 0.8, open: 0, bars: 1, thinking: 0, lid: 0 },
   bored: { happy: 0.45, scale: 0.98, smile: 0.55, open: 0, thinking: 0, lid: 0.2 },
   grin: { happy: 0.95, scale: 1.05, smile: 1, open: 0.5, thinking: 0, lid: 0 },
   happy: { happy: 1, scale: 1.06, smile: 1, open: 1, thinking: 0, lid: 0 },
@@ -250,7 +250,7 @@ export function useMood({ status, layout, reducedMotion }) {
     ]) {
       eye.lid = ease(eye.lid, target.lid ?? 0, 8, dt);
       eye.rot = ease(eye.rot, target.rot ?? 0, 7, dt);
-      eye.happy = ease(eye.happy, target.happy + talk * 0.25, 7, dt);
+      eye.happy = ease(eye.happy, target.happy, 7, dt);
       eye.scale = ease(eye.scale, target.scale + s.keyPulse * 0.06, 9, dt);
       eye.lookX = ease(eye.lookX, gx, gazeRate, dt);
       eye.lookY = ease(eye.lookY, gy + (target.raise ?? 0) * side, gazeRate, dt);
