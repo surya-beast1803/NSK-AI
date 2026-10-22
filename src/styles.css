@@ -711,7 +711,7 @@ button {
   justify-content: center;
   gap: 18px;
   background: #000;
-  transition: opacity 0.9s ease, visibility 0.9s;
+  transition: opacity 0.45s ease, visibility 0.45s;
 }
 
 .splash--leaving {
@@ -954,7 +954,7 @@ button {
   align-items: center;
   justify-content: center;
   padding: 16px;
-  animation: termsFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: termsFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .terms-overlay__backdrop {
@@ -980,7 +980,7 @@ button {
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   overflow: hidden;
-  animation: termsPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: termsPop 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .terms-card__header {

@@ -24,7 +24,7 @@ export default function Splash({ ready, onLeave, onDone }) {
   useEffect(() => {
     if (!leaving) return;
     onLeave?.();
-    const t = setTimeout(onDone, 900);
+    const t = setTimeout(onDone, 450);
     return () => clearTimeout(t);
   }, [leaving, onLeave, onDone]);
 

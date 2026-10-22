@@ -53,7 +53,7 @@ export const personality = {
 };
 
 export const splash = {
-  minDurationMs: 2200, // long enough for the reveal to read as intentional
+  minDurationMs: 3200, // increased by +1s for longer logo presence
   maxWaitMs: 9000, // after this, continue with whatever has loaded
 };
 
