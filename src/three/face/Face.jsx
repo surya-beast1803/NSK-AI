@@ -38,8 +38,8 @@ export default function Face({ status, faceRadius, mood }) {
         </group>
       </group>
       <group position={[0, L.waveformY * R, 0]}>
-        <Mouth width={(L.mouthWidth || 1.0) * R} height={0.5 * R} params={mouth} />
-        <Waveform width={(L.waveformWidth || 0.85) * R} height={0.42 * R} mix={barsMix} mood={moodName} />
+        <Mouth width={L.mouthWidth * R} height={0.5 * R} params={mouth} />
+        <Waveform width={L.waveformWidth * R} height={0.42 * R} mix={barsMix} mood={moodName} />
       </group>
     </group>
   );

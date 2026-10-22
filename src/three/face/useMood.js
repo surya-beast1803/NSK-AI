@@ -81,8 +81,6 @@ export function useMood({ status, layout, reducedMotion }) {
     else if (typing) mood = 'attentive';
     else if (idleFor > BORED_AFTER) mood = 'bored';
     else mood = 'neutral';
-    const urlMood = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('mood') : null;
-    if (urlMood && MOODS[urlMood]) mood = urlMood;
     if (import.meta.env.DEV && window.__forceMood) mood = window.__forceMood; // for previews
     if (mood !== 'bored') {
       s.bored.beatT = -1;
